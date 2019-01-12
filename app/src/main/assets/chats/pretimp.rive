@@ -1,0 +1,96 @@
+! version = 2.0
+
+//Language Code: en - English, es - Español
+//Short Code: pretimp, short for pretérito imperfecto
+
+> topic pretimp
+    + `language`
+    - ¡Okay! ¿Quieres la lección en inglés o español?
+
+    + [*](inglés|english)[*]
+    - ``getlength``{topic=pretimpen}
+
+    + [*](español|spanish)[*]
+    - ``getlength``{topic=pretimpes}
+
+    + *
+    - Por favor, dime "español" o "inglés."
+< topic
+
+> topic pretimpes
+
+    //How many messages are in the lesson so a loop can call them all.
+    + `length`
+    - 8
+
+    //Español
+    + `1`
+    - El imperfecto se usa para acciones que pasan al mismo tiempo o las que pasan durante un período extendido.
+
+    + `2`
+    - Por ejemplo, si quiero decir, "My mom was on the phone while I was playing a game," puedo decir "Mi madre hablaba\s
+    ^ por teléfono mientras yo jugaba un juego."
+
+    + `3`
+    - El ejemplo del segundo se puede demostrar con la oración "Yo miraba la televisión."
+
+    + `4`
+    - Esto significa que no has dejado de mirar la televisión, pero te refieres a la acción en pasado.
+
+    + `5`
+    - Puedes contestar así si alguien, por ejemplo, te pregunta "¿Qué has hecho hoy?" Si todavía miras la televisión\s
+    ^ en el momento en que la persona te pregunta eso, puedes usar el imperfecto porque no has dejado de mirar la\s
+    ^ televisión.
+
+    + `6`
+    - Si ya dejaste de mirar la televisión, puedes usar el pretérito. O sea, "Miré la televisión."
+
+    + `7`
+    - Si la acción está completa, se utiliza el pretérito.
+
+    + `8`
+    - Otro ejemplo: \n
+    ^ I ate an apple.\n
+    ^ Comí una manzana.{topic=random}
+
+< topic
+
+> topic pretimpen
+
+    //How many messages are in the lesson so a loop can call them all.
+    + `length`
+    - 8
+
+    //English
+    + `1`
+    - The imperfect is used for actions that happen concurrently or over an extended period of time.
+
+    + `2`
+    - For example, if I want to say, "My mom was on the phone while I was playing a game," I can say\s
+    ^ "Mi madre hablabla por teléfono mientras yo jugaba un juego."
+
+    + `3`
+    - The example of actions happening over an extended period of time can be demonstrated with the\s
+    ^ sentence "Yo miraba la televisión."
+
+    + `4`
+    - This sentence means that you haven't stopped watching TV, but you're referring to the action\s
+    ^ in the past tense.
+
+    + `5`
+    - You can answer like that if someone, for example, asks you "¿Qué has hecho hoy?" (What have\s
+    ^ you done today?). If you are still watching TV in that moment when the person asks you, you\s
+    ^ can use the imperfecr because you haven't stoppped watching TV.
+
+    + `6`
+    - If you stopped watching TV, you can use the preterite. An example, "Miré la televisión."
+
+    + `7`
+    - If the action is complete or done, the preterite is used.
+
+    + `8`
+    - Another Example\n
+    ^ I ate an apple.\n
+    ^ Comí una manzana.{topic=random}
+
+< topic

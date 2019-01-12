@@ -1,0 +1,50 @@
+! version = 2.0
+
+//Language Code: en - English, es - Español
+//Short Code: pap, short for pretérito imperfecto
+
+> topic pap
+    + `papstart`
+    - ¡Okay! ¿Quieres la lección en inglés o español?
+
+    //How many messages are in the lesson so a loop can call them all.
+    + `pap length`
+    - 9
+
+    //Español
+    + `pap es 1`
+    - "Por" se usa con causas y también la autoría.
+
+    + `pap es 2`
+    - Por ejemplo, si quiero decir, "I made this for you," puedo decir "Creé esto por ti."
+
+    + `pap es 3`
+    - Digo "por" porque "tú" eres la razón por la que creé la eso.
+
+    + `pap es 4`
+    - Otro ejemplo: Vine al banco por mi dinero.\n
+    ^ Digo "por" porque aunque haya venido al banco para retirar dinero, la causa de la acción sí misma es dinero.
+
+    + `pap es 5`
+    - En cuanto a la autoría, canciones, películas, libros, y otras obras son "por" alguien.\n
+    ^ Ej: Este libro es por el nuevo autor.
+
+    + `pap es 6`
+    - "Para" se usa con intenciones.
+
+    + `pap es 7`
+    - Ej: Compré esto para cocinar.\n
+    ^ Sí, este uso se linda con la de "por" en el primer ejemplo, pero aquí hay un verbo.
+
+    + `pap es 8`
+    - Puedo usar "para" en el primer ejemplo de por si digo "Vine aquí PARA retirar mi dinero."\n
+    ^ E igualmente puedo usar por en el ejemplo con para si digo "Cociné esto por la receta."
+
+    + `pap es 9`
+    - Otro uso de "para" es con regalos.\n
+    ^ Ej: Esta bicicleta es para ti. {topic=random}
+
+    //Change the length if you haven't, set the topic back to random, and add the short code information to
+    //open_conversation.rive if you haven't already. :)
+
+< topic

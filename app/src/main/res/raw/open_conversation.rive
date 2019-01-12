@@ -1,0 +1,52 @@
+! version = 2.0
+
+//Short Code: oc
+
+//Numbers
+! sub uno = 1
+! sub dos = 2
+! sub tres = 3
+! sub cuatro = 4
+! sub cinco = 5
+! sub seis = 6
+! sub siete = 7
+! sub ocho = 8
+! sub nueve = 9
+! sub diez = 10
+
++ `ocstart`
+- \n¿De qué quieres conversar?
+
+//I thought about using the @ operator to not have those commands in multiple places, but it might be fine how it is for
+//now.
+
++ [*]cómo uso *
+* <star1> == el pretérito => pretimp{topic=pretimp}
+* <star1> == el imperfecto => pretimp{topic=pretimp}
+* <star1> == pretérito => pretimp{topic=pretimp}
+* <star1> == imperfecto => pretimp{topic=pretimp}
+* <star1> == por y para => pretimp{topic=pretimp}
+
++ [*]necesito ayuda (con|en) *
+* <star2> == el pretérito => pretimp{topic=pretimp}
+* <star2> == el imperfecto => pretimp{topic=pretimp}
+* <star2> == pretérito => pretimp{topic=pretimp}
+* <star2> == imperfecto => pretimp{topic=pretimp}
+* <star2> == por y para => pretimp{topic=pretimp}
+- Star 1: <star1>, Star 2: <star2>
+
++ [*]quiero ayuda (con|en) *
+* <star2> == el pretérito => pretimp{topic=pretimp}
+* <star2> == el imperfecto => pretimp{topic=pretimp}
+* <star2> == pretérito => pretimp{topic=pretimp}
+* <star2> == imperfecto => pretimp{topic=pretimp}
+* <star2> == por y para => pretimp{topic=pretimp}
+- Star 1: <star1>, Star 2: <star2>
+
++ [*] clima en *
+- Clima
+
++ *
+- Perdón. No te entendí.
+
+//Add suggestions to help them ask a question.

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Linguo</string>
+    <string name="send_button_text">Enviar</string>
+    <string name="chat_edittext_hint">Escribir Mensaje</string>
+</resources>

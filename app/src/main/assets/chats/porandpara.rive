@@ -1,0 +1,62 @@
+! version = 2.0
+
+//Language Code: en - English, es - Español
+//Short Code: pyp, short for por y para
+
+> topic pyp
+    + `language`
+    - ¿Quieres la lección en inglés o español?
+
+    + [*](inglés|english)[*]
+    - ``getlength``{topic=pypen}
+
+    + [*](español|spanish)[*]
+    - ``getlength``{topic=pypes}
+
+    + *
+    - Por favor, dime "español" o "inglés."
+< topic
+
+> topic pypes
+
+    //How many messages are in the lesson so a loop can call them all.
+    + `length`
+    - 9
+
+    //Español
+    + `1`
+    - "Por" se usa con causas y también la autoría.
+
+    + `2`
+    - Por ejemplo, si quiero decir, "I made this for you," puedo decir "Creé esto por ti."
+
+    + `3`
+    - Digo "por" porque "tú" eres la razón por la que creé la eso.
+
+    + `4`
+    - Otro ejemplo: Vine al banco por mi dinero.\n
+    ^ Digo "por" porque aunque haya venido al banco para retirar dinero, la causa de la acción sí misma es dinero.
+
+    + `5`
+    - En cuanto a la autoría, canciones, películas, libros, y otras obras son "por" alguien.\n
+    ^ Ej: Este libro es por el nuevo autor.
+
+    + `6`
+    - "Para" se usa con intenciones.
+
+    + `7`
+    - Ej: Compré esto para cocinar.\n
+    ^ Sí, este uso se linda con la de "por" en el primer ejemplo, pero aquí hay un verbo.
+
+    + `8`
+    - Puedo usar "para" en el primer ejemplo de por si digo "Vine aquí PARA retirar mi dinero."\n
+    ^ E igualmente puedo usar por en el ejemplo con para si digo "Cociné esto por la receta."
+
+    + `9`
+    - Otro uso de "para" es con regalos.\n
+    ^ Ej: Esta bicicleta es para ti. {topic=random}
+
+    //Change the length if you haven't, set the topic back to random, and add the short code information to
+    //open_conversation.rive if you haven't already. :)
+
+< topic
