@@ -2,6 +2,7 @@ package linguo.example.com.linguo;
 
 import android.app.Activity;
 import android.content.res.AssetManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.rivescript.RiveScript;
@@ -44,7 +46,7 @@ public class ChatFragment extends Fragment {
 
 	private MessageAdapter mAdapter;
 	private EditText mEditText;
-	private Button mSendButton;
+	private ImageButton mSendButton;
 
 	/**
 	 * To not make mBot start the conversation upon rotating the device.
@@ -56,18 +58,23 @@ public class ChatFragment extends Fragment {
 			.build());
 
 	public static ChatFragment mFragment;
+	private boolean mGetName;
+	private String mName;
+	private boolean mGetReasonLearning;
+	private String mReasonLearning;
+
 	public static ChatFragment newInstance() {
 		mFragment = new ChatFragment();
 		return mFragment;
 	}
 
-	private DatabaseHelper db;
+	private SQLiteDatabase db;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		db = new DatabaseHelper(getContext());
+		db = new DatabaseHelper(getContext()).getWritableDatabase();
 
 		mHelpMessage = (savedInstanceState == null || savedInstanceState.getBoolean(FIRST_RUN_KEY));
 
@@ -134,6 +141,20 @@ public class ChatFragment extends Fragment {
 			public void onClick(View view) {
 				int position = getMessagePosition();
 				String editTextToString = mEditText.getText().toString().trim();
+				if (mGetName) {
+					mName = editTextToString;
+					mGetName = false;
+					mGetReasonLearning = true;
+				} else if (mGetReasonLearning) {
+					mReasonLearning = editTextToString;
+					try {
+						db.execSQL("INSERT INTO user_info('name', 'reason_learning') VALUES('" + mName + "', '" + mReasonLearning + "')"); //This looks kind of crazy because similarly to MySQL in PHP, even if you use String variables, they need to be quoted ''.
+						Log.i(CHAT_FRAGMENT_TAG, mName + " and " + mReasonLearning + " were inserted into the database.");
+					} catch (Exception e) {
+						Log.e(CHAT_FRAGMENT_TAG, e.toString());
+					}
+					mGetReasonLearning = false;
+				}
 				mMessages.add(new Message(editTextToString, Message.USER_MESSAGE, messagePosition()));
 				updateUI(position);
 				mEditText.setText("");
@@ -148,6 +169,7 @@ public class ChatFragment extends Fragment {
 		} catch (IndexOutOfBoundsException ioe) {
 			mHelpMessage = false; //I put this here just in case the variable resets itself upon reloading the app.
 			respond("`start`");
+			mGetName = true;
 		}
 
 		return v;
