@@ -2,15 +2,13 @@ package linguo.example.com.linguo;
 
 import android.app.Activity;
 import android.content.res.AssetManager;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteCursorDriver;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteQuery;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -51,7 +49,7 @@ public class ChatFragment extends Fragment {
 	/**
 	 * To not make mBot start the conversation upon rotating the device.
 	 */
-	private boolean mFirstRun;
+	private boolean mHelpMessage;
 	public final String FIRST_RUN_KEY = "FIRST_RUN";
 	public static RiveScript mBot = new RiveScript(utf8()
 			.unicodePunctuation("[¿.,!?;:]")
@@ -71,7 +69,7 @@ public class ChatFragment extends Fragment {
 
 		db = new DatabaseHelper(getContext());
 
-		mFirstRun = (savedInstanceState == null || savedInstanceState.getBoolean(FIRST_RUN_KEY));
+		mHelpMessage = (savedInstanceState == null || savedInstanceState.getBoolean(FIRST_RUN_KEY));
 
 		// Load a directory full of RiveScript documents (.rive files) //TODO Make this a one-time operation.
 		//To do this, copy every file in the assets folder to the getFilesDir() folder.
@@ -110,12 +108,32 @@ public class ChatFragment extends Fragment {
 
 		mEditText = v.findViewById(R.id.user_edit_text);
 		mSendButton = v.findViewById(R.id.send_button);
+		mSendButton.setEnabled(false);
+
+		mEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+				if (charSequence.length() > 0 && !(charSequence.toString().trim().equals("")))
+					mSendButton.setEnabled(true);
+				else
+					mSendButton.setEnabled(false);
+			}
+
+			@Override
+			public void afterTextChanged(Editable editable) {
+			}
+		});
 
 		mSendButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
 				int position = getMessagePosition();
-				String editTextToString = mEditText.getText().toString();
+				String editTextToString = mEditText.getText().toString().trim();
 				mMessages.add(new Message(editTextToString, Message.USER_MESSAGE, messagePosition()));
 				updateUI(position);
 				mEditText.setText("");
@@ -128,12 +146,8 @@ public class ChatFragment extends Fragment {
 		try {
 			mMessages.get(0);
 		} catch (IndexOutOfBoundsException ioe) {
+			mHelpMessage = false; //I put this here just in case the variable resets itself upon reloading the app.
 			respond("`start`");
-			mFirstRun = false; /*I may not need this first run variable since I was using it initially to set this if condition,
-			  but I'm looking at checking if the first element of the mMessages List is null instead
-			  because with the mFirsRun variable, if the app was left (without onDestroy() being called),
-			  it would type in `start` anyway.
-			 */
 		}
 
 		return v;
@@ -159,12 +173,12 @@ public class ChatFragment extends Fragment {
 			//The super method gives a variable called itemView.
 
 			mUserTextView = itemView.findViewById(R.id.user_text);
+
 		}
 
 		public void bind(Message message) {
 			mUserTextView.setText(message.getText());
 		}
-
 	}
 
 	//Bot Message Holder
@@ -181,7 +195,21 @@ public class ChatFragment extends Fragment {
 		public void bind(Message message) {
 			mBotTextView.setText(message.getText());
 		}
+	}
 
+	public class HelpMessageHolder extends RecyclerView.ViewHolder {
+
+		private TextView mHelpMessageTextView;
+
+		public HelpMessageHolder(LayoutInflater inflater, ViewGroup parent) {
+			super(inflater.inflate(R.layout.help_message, parent, false));
+
+			mHelpMessageTextView = itemView.findViewById(R.id.help_message);
+		}
+
+		public void bind(Message message) {
+			mHelpMessageTextView.setText(message.getText());
+		}
 	}
 
 	public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -190,34 +218,61 @@ public class ChatFragment extends Fragment {
 		public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 			LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
 
-			if (viewType == Message.USER_MESSAGE)
-				return new UserMessageHolder(layoutInflater, parent);
-			else //(viewType == Message.BOT_MESSAGE)
-				return new BotMessageHolder(layoutInflater, parent);
-			//TODO Add a view for help messages.
+			switch (viewType) {
+				case Message.USER_MESSAGE:
+					return new UserMessageHolder(layoutInflater, parent);
+
+				case Message.BOT_MESSAGE:
+					return new BotMessageHolder(layoutInflater, parent);
+
+				case HelpMessage.HELP_MESSAGE:
+					return new HelpMessageHolder(layoutInflater, parent);
+
+				default:
+					return new BotMessageHolder(layoutInflater, parent);
+			}
 		}
 
 		@Override
 		public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 			Message message = mMessages.get(position);
 
-			if (getItemViewType(position) == Message.USER_MESSAGE)
-				((UserMessageHolder) holder).bind(message);
-			else
-				((BotMessageHolder) holder).bind(message);
+			switch (getItemViewType(position)) {
+				case Message.USER_MESSAGE:
+					((UserMessageHolder) holder).bind(message);
+					break;
+
+				case Message.BOT_MESSAGE:
+					((BotMessageHolder) holder).bind(message);
+					break;
+
+				case HelpMessage.HELP_MESSAGE:
+					((HelpMessageHolder) holder).bind(message);
+					break;
+			}
+		}
+
+		@Override
+		public int getItemViewType(int position) {
+
+			switch (mMessages.get(position).getType()) {
+				case Message.USER_MESSAGE:
+					return Message.USER_MESSAGE;
+
+				case Message.BOT_MESSAGE:
+					return Message.BOT_MESSAGE;
+
+				case HelpMessage.HELP_MESSAGE:
+					return HelpMessage.HELP_MESSAGE;
+
+				default:
+					return 4;
+			}
 		}
 
 		@Override
 		public int getItemCount() {
 			return mMessages.size();
-		}
-
-		@Override
-		public int getItemViewType(int position) {
-			if (mMessages.get(position).getType() == Message.USER_MESSAGE)
-				return Message.USER_MESSAGE;
-			else
-				return Message.BOT_MESSAGE;
 		}
 
 	}
@@ -235,7 +290,7 @@ public class ChatFragment extends Fragment {
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		super.onSaveInstanceState(savedInstanceState);
-		savedInstanceState.putBoolean(FIRST_RUN_KEY, mFirstRun);
+		savedInstanceState.putBoolean(FIRST_RUN_KEY, mHelpMessage);
 	}
 
 	/**
@@ -245,14 +300,34 @@ public class ChatFragment extends Fragment {
 	public void respond(String input) {
 		String reply = mBot.reply("user", input);
 
-		if (reply.startsWith("gc")) {
+		if (reply.contains("Con lo cual, ¿de qué quieres hablar?")) {
+			mMessages.add(new Message(reply, Message.BOT_MESSAGE, messagePosition()));
+			updateUI(getMessagePosition()); //TODO Add a delay for effect.
+			mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, messagePosition()));
+			updateUI(getMessagePosition());
+		} else if (reply.startsWith("gc")) {
 			respond("`language`");
 		} else if (reply.equals("``getlength``")) {
 			repeatedResponse(Integer.parseInt(mBot.reply("user", "`length`")));
 		} else {
-			int position = getMessagePosition();
+			final int position = getMessagePosition();
 			mMessages.add(new Message(reply, Message.BOT_MESSAGE, messagePosition()));
-			updateUI(position);
+
+//			//Handler to give a messaging effect.
+//			try {
+//				final Handler handler = new Handler();
+//				handler.postDelayed(new Runnable() {
+//					@Override
+//					public void run() {
+//						// Do something after 5s = 5000ms
+
+//					}
+//				}, 5000);
+//			} catch (Exception e) {
+//
+//			}
+
+			updateUI(position); //TODO Add a delay for effect.
 		}
 	}
 
@@ -264,6 +339,8 @@ public class ChatFragment extends Fragment {
 		}
 
 		mMessages.add(new Message(mBot.reply("user", "`ocstart`"), Message.BOT_MESSAGE, messagePosition()));
+		updateUI(getMessagePosition());
+		mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, messagePosition()));
 		updateUI(getMessagePosition());
 	}
 }

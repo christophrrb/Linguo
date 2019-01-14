@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#ffffff</color>
-    <color name="colorPrimaryDark">#e0e0e0</color>
-    <color name="colorAccent">#9e9e9e</color>
+    <color name="colorPrimaryDark">#9e9e9e</color>
+    <color name="colorAccent">#4db6ac</color>
+    <color name="botMessageBubbleColor">#e0e0e0</color>
+    <color name="myDarkGray">#616161</color>
 </resources>

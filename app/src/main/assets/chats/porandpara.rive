@@ -31,14 +31,14 @@
     - Por ejemplo, si quiero decir, "I made this for you," puedo decir "Creé esto por ti."
 
     + `3`
-    - Digo "por" porque "tú" eres la razón por la que creé la eso.
+    - Digo "por" porque "tú" eres la razón por la que creé eso.
 
     + `4`
     - Otro ejemplo: Vine al banco por mi dinero.\n
     ^ Digo "por" porque aunque haya venido al banco para retirar dinero, la causa de la acción sí misma es dinero.
 
     + `5`
-    - En cuanto a la autoría, canciones, películas, libros, y otras obras son "por" alguien.\n
+    - En cuanto a la autoría, canciones, películas, libros, y otras obras son "por" alguien/algo.\n
     ^ Ej: Este libro es por el nuevo autor.
 
     + `6`
@@ -46,15 +46,63 @@
 
     + `7`
     - Ej: Compré esto para cocinar.\n
-    ^ Sí, este uso se linda con la de "por" en el primer ejemplo, pero aquí hay un verbo.
+    ^ Sí, este uso se linda con la de "por" en el primer ejemplo, pero aquí hay un verbo que sigue en\s
+    ^ vez de un sustantivo como en el ejemplo de "por dinero".
 
     + `8`
-    - Puedo usar "para" en el primer ejemplo de por si digo "Vine aquí PARA retirar mi dinero."\n
-    ^ E igualmente puedo usar por en el ejemplo con para si digo "Cociné esto por la receta."
+    - Puedo usar "para" en el primer ejemplo de "por" si digo "Vine aquí PARA retirar mi dinero" porque\s
+    ^ ahora sigue un verbo.
 
     + `9`
     - Otro uso de "para" es con regalos.\n
     ^ Ej: Esta bicicleta es para ti. {topic=random}
+
+    //Change the length if you haven't, set the topic back to random, and add the short code information to
+    //open_conversation.rive if you haven't already. :)
+
+< topic
+
+> topic pypen
+
+    //How many messages are in the lesson so a loop can call them all.
+    + `length`
+    - 9
+
+    //Español
+    + `1`
+    - "Por" is used with causes and authorship.
+
+    + `2`
+    - For example, if I want to say, "I made this for you," I can say "Creé esto por ti."
+
+    + `3`
+    - Digo "por" porque "tú" eres la razón por la que creé eso.
+    - I said "por" because "you" are the reason I made that.
+
+    + `4`
+    - Another Example: Vine al banco por mi dinero. (I came to the bank for my money.)\n
+    ^ I said "por" because although I've come to the bank to withdraw money, the intrinsic or\s
+    ^ substantial cause is money.
+
+    + `5`
+    - In regards to authorship, songs, movies, books, and other works are "por alguien/algo."\n
+    ^ Ex: Este libro es por el nuevo autor. (This book is by the new author.)
+
+    + `6`
+    - "Para" is used for intentions.
+
+    + `7`
+    - Ex: Compré esto para utilizarlo. (I bought this to use it).\n
+    ^ Yes, this use is similar to "por," but here there is a verb following instead of a noun as with\s
+    ^ "por dinero."
+
+    + `8`
+    - I can use "para" in the first example of "por" if I say "Vine aquí PARA retirar mi dinero. (I came here to withdraw my money)"\s
+    ^ because now I have a verb that follows.
+
+    + `9`
+    - Another use of "para" is with gifts.\n
+    ^ Ex: Esta bicicleta es para ti. (This bicycle is for you.){topic=random}
 
     //Change the length if you haven't, set the topic back to random, and add the short code information to
     //open_conversation.rive if you haven't already. :)

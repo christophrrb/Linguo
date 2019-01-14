@@ -7,6 +7,6 @@
         android:radius="40dp"/>
 
     <solid
-        android:color="@android:color/darker_gray"/>
+        android:color="@color/botMessageBubbleColor"/>
 
 </shape>
