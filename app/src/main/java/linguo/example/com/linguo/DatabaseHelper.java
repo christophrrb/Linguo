@@ -9,11 +9,11 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 
 public class DatabaseHelper extends SQLiteOpenHelper {
-	private final static String DATABASE_NAME = "linguo_database";
-	private final static String TABLE_NAME = "user_info";
-	private final static String ID = "id";
-	private final static String NAME = "name";
-	private final static String REASON_LEARNING = "reason_learning";
+	public final static String DATABASE_NAME = "linguo_database";
+	public final static String TABLE_NAME = "user_info";
+	public final static String ID = "id";
+	public final static String NAME = "name";
+	public final static String REASON_LEARNING = "reason_learning";
 
 	public DatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, 1);

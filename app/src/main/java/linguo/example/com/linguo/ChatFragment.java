@@ -2,7 +2,9 @@ package linguo.example.com.linguo;
 
 import android.app.Activity;
 import android.content.res.AssetManager;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -70,6 +72,8 @@ public class ChatFragment extends Fragment {
 
 	private SQLiteDatabase db;
 
+	MediaPlayer mp;
+
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -77,6 +81,8 @@ public class ChatFragment extends Fragment {
 		db = new DatabaseHelper(getContext()).getWritableDatabase();
 
 		mHelpMessage = (savedInstanceState == null || savedInstanceState.getBoolean(FIRST_RUN_KEY));
+
+		mp = MediaPlayer.create(getActivity().getApplicationContext(), R.raw.pop);
 
 		// Load a directory full of RiveScript documents (.rive files) //TODO Make this a one-time operation.
 		//To do this, copy every file in the assets folder to the getFilesDir() folder.
@@ -166,10 +172,32 @@ public class ChatFragment extends Fragment {
 
 		try {
 			mMessages.get(0);
-		} catch (IndexOutOfBoundsException ioe) {
-			mHelpMessage = false; //I put this here just in case the variable resets itself upon reloading the app.
-			respond("`start`");
-			mGetName = true;
+		} catch (IndexOutOfBoundsException ioe) { //Remember that this code only checks for an IndexOutOfBoundsException!
+			//This code determines if the conversation should start from the introductory phase or not.
+			String sGetName = "SELECT " + DatabaseHelper.NAME + " FROM " + DatabaseHelper.TABLE_NAME + " LIMIT 1";
+			Cursor cursor = db.rawQuery(sGetName, null);
+			String[] sResults = new String[1];
+			if (cursor.moveToFirst()) {
+				int i = 0;
+				do {
+					sResults[i] = cursor.getString(cursor.getColumnIndex(DatabaseHelper.NAME));
+					i++;
+				} while (cursor.moveToNext());
+
+				mGetName = false;
+				Log.i(CHAT_FRAGMENT_TAG, "sResults[0]: " + sResults[0]);
+
+				mHelpMessage = true;
+				mMessages.add(new Message("Hola " + sResults[0] + " \uD83D\uDC4B", Message.BOT_MESSAGE, messagePosition()));
+				updateUI(getMessagePosition());
+				respond("`ocstart`");
+			} else {
+				mGetName = true;
+				mHelpMessage = false;
+				respond("`start`");
+			}
+
+
 		}
 
 		return v;
@@ -182,6 +210,8 @@ public class ChatFragment extends Fragment {
 		} else
 			mAdapter.notifyItemInserted(insertPosition);
 			if (mAdapter.getItemCount() > 0) mRecyclerView.smoothScrollToPosition(mAdapter.getItemCount() - 1);
+			mp.start();
+
 	}
 
 	//User Message Holder
@@ -322,7 +352,7 @@ public class ChatFragment extends Fragment {
 	public void respond(String input) {
 		String reply = mBot.reply("user", input);
 
-		if (reply.contains("Con lo cual, ¿de qué quieres hablar?")) {
+		if (reply.contains("Con lo cual, ¿de qué quieres hablar?") || reply.contains("¿De qué quieres conversar?")) {
 			mMessages.add(new Message(reply, Message.BOT_MESSAGE, messagePosition()));
 			updateUI(getMessagePosition()); //TODO Add a delay for effect.
 			mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, messagePosition()));
