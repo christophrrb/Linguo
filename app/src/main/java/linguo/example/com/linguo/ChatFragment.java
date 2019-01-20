@@ -5,8 +5,12 @@ import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,22 +20,24 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.rivescript.RiveScript;
+
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static com.rivescript.Config.Builder.utf8;
-
-import org.apache.commons.io.*;
 
 /**
  * Created by christophrrb on 12/23/18.
@@ -64,6 +70,13 @@ public class ChatFragment extends Fragment {
 	private String mName;
 	private boolean mGetReasonLearning;
 	private String mReasonLearning;
+	private boolean mResponseValidation = false;
+	private boolean mJumpToSr = false;
+	private String mDifficulty;
+	private boolean mStartAttempts = false;
+	private int mAttempts = 0;
+	private Sound mSound;
+	private boolean mSrStart;
 
 	public static ChatFragment newInstance() {
 		mFragment = new ChatFragment();
@@ -249,6 +262,7 @@ public class ChatFragment extends Fragment {
 		}
 	}
 
+	//HelpMessage Holder
 	public class HelpMessageHolder extends RecyclerView.ViewHolder {
 
 		private TextView mHelpMessageTextView;
@@ -261,6 +275,54 @@ public class ChatFragment extends Fragment {
 
 		public void bind(Message message) {
 			mHelpMessageTextView.setText(message.getText());
+		}
+	}
+
+	//SoundMessage Holder
+	public class SoundMessageHolder extends RecyclerView.ViewHolder {
+		private ImageButton mPlayButton;
+		private ProgressBar mProgressBar;
+		final MediaPlayer voice = MediaPlayer.create(getActivity().getApplicationContext(), mSound.getResId());
+
+		public SoundMessageHolder(LayoutInflater inflater, ViewGroup parent) {
+			super(inflater.inflate(R.layout.sound_message, parent, false));
+
+
+			mPlayButton = itemView.findViewById(R.id.play_button);
+			mProgressBar = itemView.findViewById(R.id.sound_progress_bar);
+
+			final Handler handler = new Handler();
+			final Runnable runnable = new Runnable() {
+
+				@Override
+				public void run() {
+					try{
+						mProgressBar.setProgress(voice.getCurrentPosition());
+					}
+					catch (Exception e) {
+						// TODO: handle exception
+					}
+					finally{
+						//also call the same runnable to call it at regular interval
+						handler.postDelayed(this, 50);
+					}
+				}
+			};
+
+			mPlayButton.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View view) {
+					voice.start();
+					handler.post(runnable);
+				}
+			});
+
+
+			mProgressBar.setMax(voice.getDuration());
+
+		}
+
+		public void bind(Message message) {
 		}
 	}
 
@@ -279,6 +341,9 @@ public class ChatFragment extends Fragment {
 
 				case HelpMessage.HELP_MESSAGE:
 					return new HelpMessageHolder(layoutInflater, parent);
+
+				case SoundMessage.SOUND_MESSAGE:
+					return new SoundMessageHolder(layoutInflater, parent);
 
 				default:
 					return new BotMessageHolder(layoutInflater, parent);
@@ -301,6 +366,9 @@ public class ChatFragment extends Fragment {
 				case HelpMessage.HELP_MESSAGE:
 					((HelpMessageHolder) holder).bind(message);
 					break;
+
+				case SoundMessage.SOUND_MESSAGE:
+					((SoundMessageHolder) holder).bind(message); //TODO Possibly remove this.
 			}
 		}
 
@@ -316,6 +384,9 @@ public class ChatFragment extends Fragment {
 
 				case HelpMessage.HELP_MESSAGE:
 					return HelpMessage.HELP_MESSAGE;
+
+				case SoundMessage.SOUND_MESSAGE:
+					return SoundMessage.SOUND_MESSAGE;
 
 				default:
 					return 4;
@@ -349,7 +420,7 @@ public class ChatFragment extends Fragment {
 	 * Takes a message (from user input or programmed input), gets the bot's reply, adds the bot's message to the message array, and calls updateUI(ChatFragment.messagePosition()).
 	 * @param input Takes an input, either from the user or the bot.
 	 */
-	public void respond(String input) {
+	public String respond(String input) {
 		String reply = mBot.reply("user", input);
 
 		if (reply.contains("Con lo cual, ¿de qué quieres hablar?") || reply.contains("¿De qué quieres conversar?")) {
@@ -361,9 +432,38 @@ public class ChatFragment extends Fragment {
 			respond("`language`");
 		} else if (reply.equals("``getlength``")) {
 			repeatedResponse(Integer.parseInt(mBot.reply("user", "`length`")));
+		} else if (reply.equals("``sr``") || mSrStart || mStartAttempts) {
+			if (reply.equals("``sr``")) {
+				respond("`srstart`");
+				mSrStart = true;
+			} else if (reply.equals("fácil") || reply.equals("intermedio") || reply.equals("difícil")) {
+				Log.i(CHAT_FRAGMENT_TAG, "mJumpToSr");
+				mSrStart = false;
+				mStartAttempts = true;
+				mDifficulty = reply;
+				mSound = SoundMessage.getRandomSound(mDifficulty);
+				int position = getMessagePosition();
+				mMessages.add(new Message(SoundMessage.SOUND_MESSAGE, messagePosition()));
+				updateUI(position);
+				mBot.reply("user", "`srcontinuestart` " + mSound.getSpelling());
+			} else if (mStartAttempts) {
+				if (mAttempts > 2) {
+					Log.i(CHAT_FRAGMENT_TAG, "mAttempts");
+					mStartAttempts = false;
+					respond("`srquitwrong`");
+					mAttempts = 0;
+					respond("`ocstart`");
+				} else {
+					final int position = getMessagePosition();
+					mMessages.add(new Message(reply, Message.BOT_MESSAGE, messagePosition()));
+					updateUI(position);
+					mAttempts++;
+				}
+			}
+
 		} else {
-			final int position = getMessagePosition();
-			mMessages.add(new Message(reply, Message.BOT_MESSAGE, messagePosition()));
+				final int position = getMessagePosition();
+				mMessages.add(new Message(reply, Message.BOT_MESSAGE, messagePosition()));
 
 //			//Handler to give a messaging effect.
 //			try {
@@ -381,6 +481,8 @@ public class ChatFragment extends Fragment {
 
 			updateUI(position); //TODO Add a delay for effect.
 		}
+
+		return reply;
 	}
 
 	public void repeatedResponse(int iterations) {
@@ -395,4 +497,5 @@ public class ChatFragment extends Fragment {
 		mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, messagePosition()));
 		updateUI(getMessagePosition());
 	}
+
 }

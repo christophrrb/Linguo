@@ -12,6 +12,12 @@ public class Message {
 	private int mPosition;
 	private String mText;
 
+	public Message(int type, int position) {
+		mText = "Non-text Message";
+		mType = type;
+		mPosition = position;
+	}
+
 	public Message(String text, int type, int position) {
 		mText = text;
 		mType = type;

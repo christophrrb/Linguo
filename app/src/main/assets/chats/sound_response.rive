@@ -1,0 +1,44 @@
+! version = 2.0
+
+//Numbers
+! sub uno = 1
+! sub dos = 2
+! sub tres = 3
+! sub cuatro = 4
+! sub cinco = 5
+! sub seis = 6
+! sub siete = 7
+! sub ocho = 8
+! sub nueve = 9
+! sub diez = 10
+
+> topic sr
++ `srstart`
+- Elige una dificultad: fácil, intermedio, o difícil.
+
++ [*]fácil[*]
+- fácil{topic=srcontinue}
+
++ [*]intermedio[*]
+- intermedio{topic=srcontinue}
+
++ [*]difícil[*]
+- difícil{topic=srcontinue}
+
++ *
+- Por favor, escribe "fácil," "intermedio," o "difícil."
+
+< topic
+
+> topic srcontinue
++ `srcontinuestart` *
+- <set phrase=<star>>
+
++ `srquitwrong`
+- Tal vez otra vez. La frase era "<get phrase>."{topic=random}
+
++ *
+* <star> == <get phrase> => ¡Qué bueno! Lo acertaste.{topic=random}
+- Intenta de nuevo.
+- Sigue intentando.
+< topic

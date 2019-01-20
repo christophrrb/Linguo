@@ -33,7 +33,9 @@
 * <star2> == pretérito => gc pretimp{topic=pretimp}
 * <star2> == imperfecto => gc pretimp{topic=pretimp}
 * <star2> == por y para => gc pyp{topic=pyp}
-- Star 1: <star1>, Star 2: <star2>
+* <star2> == audición => ``sr``{topic=sr}
+* <star2> == mi audición => ``sr``{topic=sr}
+* <star2> == la audición => ``sr``{topic=sr}
 
 + [*]quiero ayuda (con|en) *
 * <star2> == el pretérito => gc pretimp{topic=pretimp}
@@ -41,7 +43,9 @@
 * <star2> == pretérito => gc pretimp{topic=pretimp}
 * <star2> == imperfecto => gc pretimp{topic=pretimp}
 * <star2> == por y para => gc pyp{topic=pyp}
-- Star 1: <star1>, Star 2: <star2>
+* <star2> == audición => ``sr``{topic=sr}
+* <star2> == mi audición => ``sr``{topic=sr}
+* <star2> == la audición => ``sr``{topic=sr}
 
 + [*] clima en *
 - Clima
