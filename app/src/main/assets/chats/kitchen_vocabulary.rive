@@ -1,0 +1,79 @@
+! version = 2.0
+
+//Numbers
+! sub uno = 1
+! sub dos = 2
+! sub tres = 3
+! sub cuatro = 4
+! sub cinco = 5
+! sub seis = 6
+! sub siete = 7
+! sub ocho = 8
+! sub nueve = 9
+! sub diez = 10
+
+// short_code = vc (vocabulario de la cocina)
+
+> topic vc
++ `vcstart`
+- Aprendamos cinco palabras. (Let's learn five words.)
+
+//How many messages are in the lesson so vocabularyRepeatedResponse can loop them all.
++ `length`
+- 5
+
+//Q: Aren't RiveScript comments supposed to be exclamation points? :/
+//A: Yes!
+
+//Estufa
++ `1 image`
+- vc_estufa_image
+
++ `1 text`
+- la estufa (es-THOO-fah) - the stove
+
++ `1 sound`
+- vc_estufa_sound
+
+//Horno
++ `2 image`
+- vc_horno_image
+
++ `2 text`
+- el horno (OR-no) - the oven
+
++ `2 sound`
+-vc_horno_sound
+
+//Refrigerador
++ `3 image`
+- vc_refrigerador_image
+
++ `3 text`
+- el refrigerador (re-free-heh-rah-DOR) - the refrigerator
+
++ `3 sound`
+- vc_refrigerador_sound
+
+//Gabinete
+//TODO Change back to gabinete
++ `4 image`
+- vc_gabinete_image
+
++ `4 text`
+- el gabinete (gah-bee-NEH-theh) - the cabinet
+
++ `4 sound`
+- vc_gabinete_sound
+
+//Almacena
++ `5 image`
+- vc_almacena_image
+
++ `5 text`
+- la almacena (al-mah-CEH-nah) - the pantry
+
++ `5 sound`
+- vc_almacena_sound{topic=random}
+
+< topic

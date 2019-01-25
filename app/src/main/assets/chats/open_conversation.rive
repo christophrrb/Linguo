@@ -36,6 +36,8 @@
 * <star2> == audición => ``sr``{topic=sr}
 * <star2> == mi audición => ``sr``{topic=sr}
 * <star2> == la audición => ``sr``{topic=sr}
+* <star2> == vocabulario de la cocina => ``vc``{topic=vc}
+* <star2> == el vocabulario de la cocina => ``vc``{topic=vc}
 
 + [*]quiero ayuda (con|en) *
 * <star2> == el pretérito => gc pretimp{topic=pretimp}
@@ -46,6 +48,18 @@
 * <star2> == audición => ``sr``{topic=sr}
 * <star2> == mi audición => ``sr``{topic=sr}
 * <star2> == la audición => ``sr``{topic=sr}
+* <star2> == vocabulario de la cocina => ``vc``{topic=vc}
+* <star2> == el vocabulario de la cocina => ``vc``{topic=vc}
+
++ ayúdame (con|en) *
+* <star2> == el pretérito => gc pretimp{topic=pretimp}
+* <star2> == el imperfecto => gc pretimp{topic=pretimp}
+* <star2> == pretérito => gc pretimp{topic=pretimp}
+* <star2> == imperfecto => gc pretimp{topic=pretimp}
+* <star2> == por y para => gc pyp{topic=pyp}
+* <star2> == audición => ``sr``{topic=sr}
+* <star2> == vocabulario de la cocina => ``vc``{topic=vc}
+* <star2> == el vocabulario de la cocina => ``vc``{topic=vc}
 
 + [*] clima en *
 - Clima

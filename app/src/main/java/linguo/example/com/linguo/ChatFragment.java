@@ -1,17 +1,22 @@
 package linguo.example.com.linguo;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -20,10 +25,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.LayoutAnimationController;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
 
 import com.rivescript.RiveScript;
 
@@ -34,8 +45,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static com.rivescript.Config.Builder.utf8;
 
@@ -45,47 +54,146 @@ import static com.rivescript.Config.Builder.utf8;
 
 public class ChatFragment extends Fragment {
 
+	/**
+	 * This variable is used for some Log messages in Logcat.
+	 * <br>
+	 * {@value} is its value.
+	 */
 	public static final String CHAT_FRAGMENT_TAG = "ChatFragment";
-	private RecyclerView mRecyclerView;
-	private Activity mParentActivity;
-	public static List<Message> mMessages = new ArrayList<Message>();
-
-	private static int mMessagePosition = 0;
-
-	private MessageAdapter mAdapter;
-	private EditText mEditText;
-	private ImageButton mSendButton;
 
 	/**
-	 * To not make mBot start the conversation upon rotating the device.
+	 * This variable is used to not start a conversation over upon having to redraw the layout due
+	 * to exiting the app, rotating the screen, etc.
+	 * <br>
+	 * {@value} is its value.
+	 */
+	public final String FIRST_RUN_KEY = "FIRST_RUN";
+
+	/**
+	 * Parent Activity. Can be used to retrieve application context.
+	 */
+	private Activity mParentActivity;
+
+	/**
+	 * The current ChatFragment. This variable is used by the {@link ChatActivity} to create the
+	 * Fragment.
+	 */
+	public static ChatFragment mFragment;
+
+	/**
+	 * Message RecyclerView
+	 */
+	private RecyclerView mRecyclerView;
+
+	/**
+	 * The MessageAdapter creates ViewHolders, binds Views, determines the type of View, and calls
+	 * the ViewHolder's bind method.
+	 */
+	private MessageAdapter mAdapter;
+
+	/**
+	 * ArrayList that stores all Messages.
+	 */
+	public static List<Message> mMessages = new ArrayList<Message>();
+
+
+	/**
+	 * Determines whether a help message should display or not.
+	 * @deprecated
 	 */
 	private boolean mHelpMessage;
-	public final String FIRST_RUN_KEY = "FIRST_RUN";
+
+	/**
+	 * The RiveScript Chat Bot
+	 */
 	public static RiveScript mBot = new RiveScript(utf8()
 			.unicodePunctuation("[¿.,!?;:]")
 			.build());
 
-	public static ChatFragment mFragment;
-	private boolean mGetName;
-	private String mName;
-	private boolean mGetReasonLearning;
-	private String mReasonLearning;
-	private boolean mResponseValidation = false;
-	private boolean mJumpToSr = false;
-	private String mDifficulty;
-	private boolean mStartAttempts = false;
-	private int mAttempts = 0;
-	private Sound mSound;
-	private boolean mSrStart;
+	/**
+	 * Determines the position of the message to be added in the third parameter of {@link Message}.
+	 */
+	private static int mMessagePosition = 0;
 
+	/**
+	 * This is the EditText to type in messages.
+	 */
+	private EditText mEditText;
+
+	/**
+	 * The Send Message Button
+	 */
+	private ImageButton mSendButton;
+
+	/**
+	 * MediaPlayer for voice messages. Used to create the pop sound for new messages and to play
+	 * the recordings for sound messages.
+	 */
+	private MediaPlayer mp;
+
+	/**
+	 * This boolean determines whether the name of the user should be retrieved or not. If not, it
+	 * greets the user with the name stored by the bot.
+	 */
+	private boolean mGetName;
+
+	/**
+	 * The user's name. Set either by the database, or if there is not one stored in the database,
+	 * then form user input.
+	 */
+	private String mName;
+
+	/**
+	 * A variable to determine if we should store input for why the user is learning the language.
+	 * @deprecated
+	 */
+	private boolean mGetReasonLearning;
+
+	/**
+	 * Why the user is learning the language.
+	 * @deprecated
+	 */
+	private String mReasonLearning;
+
+	/**
+	 * The requested difficulty of the voice message.
+	 */
+	private String mDifficulty;
+
+	/**
+	 * Variable to determine of attempts should be counted.
+	 */
+	private boolean mStartAttempts = false;
+
+	/**
+	 * Number of attempts counted. Is set back to 0 when it is greater than 2 attempts.
+	 */
+	private int mAttempts = 0;
+
+	/**
+	 * A random sound from {@link Sound} with the difficulty that the user has requested.
+	 */
+	private Sound mSound;
+
+	/**
+	 * Determines if one of the conditionals in {@link #respond(String)} should be entered to get
+	 * the difficulty for the sound message.
+	 */
+	private boolean mCheckForDifficulty;
+
+	/**
+	 * This database stores the user's name.
+	 */
+	private SQLiteDatabase db;
+
+	/**
+	 * Used by ChatActivity to create a ChatFragment object
+	 * @return An instance of ChatFragment
+	 */
 	public static ChatFragment newInstance() {
 		mFragment = new ChatFragment();
 		return mFragment;
 	}
-
-	private SQLiteDatabase db;
-
-	MediaPlayer mp;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -130,6 +238,10 @@ public class ChatFragment extends Fragment {
 		LinearLayoutManager llm = new LinearLayoutManager(getActivity());
 		mRecyclerView.setLayoutManager(llm);
 		llm.setStackFromEnd(true);
+		LayoutAnimationController animationController = AnimationUtils.loadLayoutAnimation(mRecyclerView.getContext(), R.anim.layout_item_slide);
+		mRecyclerView.setLayoutAnimation(animationController);
+//		mRecyclerView.setItemAnimator();
+		mParentActivity = getActivity();
 		mParentActivity = getActivity();
 
 		mEditText = v.findViewById(R.id.user_edit_text);
@@ -158,7 +270,6 @@ public class ChatFragment extends Fragment {
 		mSendButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				int position = getMessagePosition();
 				String editTextToString = mEditText.getText().toString().trim();
 				if (mGetName) {
 					mName = editTextToString;
@@ -174,8 +285,8 @@ public class ChatFragment extends Fragment {
 					}
 					mGetReasonLearning = false;
 				}
-				mMessages.add(new Message(editTextToString, Message.USER_MESSAGE, messagePosition()));
-				updateUI(position);
+				mMessages.add(new Message(editTextToString, Message.USER_MESSAGE, mMessagePosition));
+				updateUI(mMessagePosition++);
 				mEditText.setText("");
 				respond(editTextToString);
 			}
@@ -201,8 +312,8 @@ public class ChatFragment extends Fragment {
 				Log.i(CHAT_FRAGMENT_TAG, "sResults[0]: " + sResults[0]);
 
 				mHelpMessage = true;
-				mMessages.add(new Message("Hola " + sResults[0] + " \uD83D\uDC4B", Message.BOT_MESSAGE, messagePosition()));
-				updateUI(getMessagePosition());
+				mMessages.add(new Message("Hola " + sResults[0] + " \uD83D\uDC4B", Message.BOT_MESSAGE, mMessagePosition));
+				updateUI(mMessagePosition++);
 				respond("`ocstart`");
 			} else {
 				mGetName = true;
@@ -216,18 +327,32 @@ public class ChatFragment extends Fragment {
 		return v;
 	}
 
+	/**
+	 * Creates an Adapter and calls the adapter to update for changes in the RecyclerView to due new
+	 * messages.
+	 * @param insertPosition Position where the new message was inserted.
+	 */
 	public void updateUI(int insertPosition) {
 		if (mAdapter == null) {
 			mAdapter = new MessageAdapter();
 			mRecyclerView.setAdapter(mAdapter);
-		} else
-			mAdapter.notifyItemInserted(insertPosition);
-			if (mAdapter.getItemCount() > 0) mRecyclerView.smoothScrollToPosition(mAdapter.getItemCount() - 1);
-			mp.start();
+		} else {
+//			final Context context = mRecyclerView.getContext();
+//			mRecyclerView.getAdapter().notifyItemChanged(insertPosition);
+//			mAdapter.notifyItemInserted(insertPosition);
+		}
 
+		if (mAdapter.getItemCount() > 0) mRecyclerView.smoothScrollToPosition(mAdapter.getItemCount() - 1);
+			mp.start();
 	}
 
-	//User Message Holder
+	public void updateUIRange(int insertRange) {
+		mAdapter.notifyItemRangeInserted(mMessagePosition - insertRange, insertRange);
+	}
+
+	/**
+	 * UserMessageHolder
+	 */
 	public class UserMessageHolder extends RecyclerView.ViewHolder {
 
 		private TextView mUserTextView;
@@ -246,7 +371,9 @@ public class ChatFragment extends Fragment {
 		}
 	}
 
-	//Bot Message Holder
+	/**
+	 * BotMessageHolder
+	 */
 	public class BotMessageHolder extends RecyclerView.ViewHolder {
 
 		private TextView mBotTextView;
@@ -262,7 +389,9 @@ public class ChatFragment extends Fragment {
 		}
 	}
 
-	//HelpMessage Holder
+	/**
+	 * HelpMessageHolder
+	 */
 	public class HelpMessageHolder extends RecyclerView.ViewHolder {
 
 		private TextView mHelpMessageTextView;
@@ -278,19 +407,26 @@ public class ChatFragment extends Fragment {
 		}
 	}
 
-	//SoundMessage Holder
+	/**
+	 * SoundMessageHolder
+	 */
 	public class SoundMessageHolder extends RecyclerView.ViewHolder {
 		private ImageButton mPlayButton;
 		private ProgressBar mProgressBar;
-		final MediaPlayer voice = MediaPlayer.create(getActivity().getApplicationContext(), mSound.getResId());
+		private MediaPlayer voice = null;
+		/*
+			The problem with sound seems to be that if the messages have to reload,
+			SoundMessageHolder is told to set the message to the current sound, which could have
+			changed if the user requested to do another sound practice.
+		 */
 
 		public SoundMessageHolder(LayoutInflater inflater, ViewGroup parent) {
 			super(inflater.inflate(R.layout.sound_message, parent, false));
 
-
 			mPlayButton = itemView.findViewById(R.id.play_button);
 			mProgressBar = itemView.findViewById(R.id.sound_progress_bar);
 
+			//This is the code to move the progress bar with respect to the progress of the message.
 			final Handler handler = new Handler();
 			final Runnable runnable = new Runnable() {
 
@@ -316,16 +452,42 @@ public class ChatFragment extends Fragment {
 					handler.post(runnable);
 				}
 			});
-
-
-			mProgressBar.setMax(voice.getDuration());
-
 		}
 
 		public void bind(Message message) {
+			voice = MediaPlayer.create(getActivity().getApplicationContext(), message.getResId());
+			mProgressBar.setMax(voice.getDuration());
 		}
 	}
 
+	/**
+	 * ImageMessageHolder
+	 */
+	public class ImageMessageHolder extends RecyclerView.ViewHolder {
+		private ImageView imageView;
+
+		public ImageMessageHolder(LayoutInflater inflater, ViewGroup parent) {
+			super(inflater.inflate(R.layout.image_message, parent, false));
+
+			imageView = itemView.findViewById(R.id.message_image_view);
+		}
+
+		public void bind (Message message) {
+//			imageView.setImageDrawable(getResources().getDrawable(message.getResId()));
+			Glide.with(getContext()).load(message.getResId()).into(imageView);
+		}
+
+//		imageView.setImageBitmap(
+//					Bitmap.createBitmap(
+//							BitmapFactory.decodeResource(
+//									getResources(),
+//									message.getResId())));
+//		}
+	}
+
+	/**
+	 * @see #mAdapter
+	 */
 	public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
 		@Override
@@ -342,8 +504,11 @@ public class ChatFragment extends Fragment {
 				case HelpMessage.HELP_MESSAGE:
 					return new HelpMessageHolder(layoutInflater, parent);
 
-				case SoundMessage.SOUND_MESSAGE:
+				case Message.SOUND_MESSAGE:
 					return new SoundMessageHolder(layoutInflater, parent);
+
+				case Message.IMAGE_MESSAGE:
+					return new ImageMessageHolder(layoutInflater, parent);
 
 				default:
 					return new BotMessageHolder(layoutInflater, parent);
@@ -367,8 +532,13 @@ public class ChatFragment extends Fragment {
 					((HelpMessageHolder) holder).bind(message);
 					break;
 
-				case SoundMessage.SOUND_MESSAGE:
-					((SoundMessageHolder) holder).bind(message); //TODO Possibly remove this.
+				case Message.SOUND_MESSAGE:
+					((SoundMessageHolder) holder).bind(message);
+					break;
+
+				case Message.IMAGE_MESSAGE:
+					((ImageMessageHolder) holder).bind(message);
+					break;
 			}
 		}
 
@@ -385,8 +555,11 @@ public class ChatFragment extends Fragment {
 				case HelpMessage.HELP_MESSAGE:
 					return HelpMessage.HELP_MESSAGE;
 
-				case SoundMessage.SOUND_MESSAGE:
-					return SoundMessage.SOUND_MESSAGE;
+				case Message.SOUND_MESSAGE:
+					return Message.SOUND_MESSAGE;
+
+				case Message.IMAGE_MESSAGE:
+					return Message.IMAGE_MESSAGE;
 
 				default:
 					return 4;
@@ -400,16 +573,6 @@ public class ChatFragment extends Fragment {
 
 	}
 
-	public static int messagePosition() {
-		int returnValue = mMessagePosition;
-		mMessagePosition++;
-		return returnValue;
-	}
-
-	public static int getMessagePosition() {
-		return mMessagePosition;
-	}
-
 	@Override
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		super.onSaveInstanceState(savedInstanceState);
@@ -417,53 +580,59 @@ public class ChatFragment extends Fragment {
 	}
 
 	/**
-	 * Takes a message (from user input or programmed input), gets the bot's reply, adds the bot's message to the message array, and calls updateUI(ChatFragment.messagePosition()).
+	 * Takes a message (from user input or programmed input), gets the bot's reply, adds the bot's message to the message array, and calls updateUI(ChatFragment.mMessagePosition).
 	 * @param input Takes an input, either from the user or the bot.
 	 */
 	public String respond(String input) {
 		String reply = mBot.reply("user", input);
 
 		if (reply.contains("Con lo cual, ¿de qué quieres hablar?") || reply.contains("¿De qué quieres conversar?")) {
-			mMessages.add(new Message(reply, Message.BOT_MESSAGE, messagePosition()));
-			updateUI(getMessagePosition()); //TODO Add a delay for effect.
-			mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, messagePosition()));
-			updateUI(getMessagePosition());
+			mMessages.add(new Message(reply, Message.BOT_MESSAGE, mMessagePosition));
+			updateUI(mMessagePosition++); //TODO Add a delay for effect.
+			mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, mMessagePosition));
+			updateUI(mMessagePosition++);
 		} else if (reply.startsWith("gc")) {
 			respond("`language`");
 		} else if (reply.equals("``getlength``")) {
 			repeatedResponse(Integer.parseInt(mBot.reply("user", "`length`")));
-		} else if (reply.equals("``sr``") || mSrStart || mStartAttempts) {
+		} else if (reply.equals("``sr``") || mCheckForDifficulty || mStartAttempts) {
 			if (reply.equals("``sr``")) {
 				respond("`srstart`");
-				mSrStart = true;
+				mCheckForDifficulty = true;
 			} else if (reply.equals("fácil") || reply.equals("intermedio") || reply.equals("difícil")) {
 				Log.i(CHAT_FRAGMENT_TAG, "mJumpToSr");
-				mSrStart = false;
+				mCheckForDifficulty = false;
 				mStartAttempts = true;
 				mDifficulty = reply;
 				mSound = SoundMessage.getRandomSound(mDifficulty);
-				int position = getMessagePosition();
-				mMessages.add(new Message(SoundMessage.SOUND_MESSAGE, messagePosition()));
-				updateUI(position);
+				mMessages.add(new Message(mSound.getResId(), Message.SOUND_MESSAGE, mMessagePosition));
+				updateUI(mMessagePosition++);
 				mBot.reply("user", "`srcontinuestart` " + mSound.getSpelling());
 			} else if (mStartAttempts) {
-				if (mAttempts > 2) {
+				if (reply.equals("¡Qué bueno! Lo acertaste.")) {
+					mMessages.add(new Message(reply, Message.BOT_MESSAGE, mMessagePosition));
+					updateUI(mMessagePosition++);
+					mStartAttempts = false;
+					mAttempts = 0;
+					respond("`ocstart`");
+				} else if (mAttempts > 2) {
 					Log.i(CHAT_FRAGMENT_TAG, "mAttempts");
 					mStartAttempts = false;
 					respond("`srquitwrong`");
 					mAttempts = 0;
 					respond("`ocstart`");
 				} else {
-					final int position = getMessagePosition();
-					mMessages.add(new Message(reply, Message.BOT_MESSAGE, messagePosition()));
-					updateUI(position);
+					mMessages.add(new Message(reply, Message.BOT_MESSAGE, mMessagePosition));
+					updateUI(mMessagePosition++);
 					mAttempts++;
 				}
 			}
 
+		} else if (reply.equals("``vc``")) {
+			respond("`vcstart`");
+			vocabularyRepeatedResponse();
 		} else {
-				final int position = getMessagePosition();
-				mMessages.add(new Message(reply, Message.BOT_MESSAGE, messagePosition()));
+				mMessages.add(new Message(reply, Message.BOT_MESSAGE, mMessagePosition));
 
 //			//Handler to give a messaging effect.
 //			try {
@@ -479,23 +648,42 @@ public class ChatFragment extends Fragment {
 //
 //			}
 
-			updateUI(position); //TODO Add a delay for effect.
+			updateUI(mMessagePosition++); //TODO Add a delay for effect.
 		}
 
 		return reply;
 	}
 
+	/**
+	 * Used to send multiple bot responses from one user input.
+	 * @param iterations How many times the method should be run
+	 */
 	public void repeatedResponse(int iterations) {
 		for (int i = 1; i <= iterations; i++) {
-			int position = getMessagePosition();
-			mMessages.add(new Message(mBot.reply("user", "`" + i + "`"), Message.BOT_MESSAGE, messagePosition()));
-			updateUI(position);
+			mMessages.add(new Message(mBot.reply("user", "`" + i + "`"), Message.BOT_MESSAGE, mMessagePosition));
+			updateUI(mMessagePosition++);
 		}
 
-		mMessages.add(new Message(mBot.reply("user", "`ocstart`"), Message.BOT_MESSAGE, messagePosition()));
-		updateUI(getMessagePosition());
-		mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, messagePosition()));
-		updateUI(getMessagePosition());
+		mMessages.add(new Message(mBot.reply("user", "`ocstart`"), Message.BOT_MESSAGE, mMessagePosition));
+		updateUI(mMessagePosition++);
+		mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, mMessagePosition));
+		updateUI(mMessagePosition++);
+	}
+
+	public void vocabularyRepeatedResponse() {
+		int iterations = Integer.parseInt(mBot.reply("user", "`length`"));
+
+		for (int i = 1; i<= iterations; i++) {
+			/* I used Integer.parseInt() for the image and sound messages because the method is
+			overloaded, mBot returns a String, so it would use the ID for a String and use the wrong
+			method. */
+			mMessages.add(new Message(getResources().getIdentifier(mBot.reply("user", "`" + i + " image`"), "drawable", getActivity().getPackageName()), Message.IMAGE_MESSAGE, mMessagePosition++));
+			mMessages.add(new Message(mBot.reply("user", "`" + i + " text`"), Message.BOT_MESSAGE, mMessagePosition++));
+			mMessages.add(new Message(getResources().getIdentifier(mBot.reply("user", "`" + i + " sound`"), "raw", getActivity().getPackageName()), Message.SOUND_MESSAGE, mMessagePosition++));
+		}
+
+		updateUI(iterations);
+		respond("`ocstart`");
 	}
 
 }
