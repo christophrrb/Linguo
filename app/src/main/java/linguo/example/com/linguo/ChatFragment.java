@@ -2,6 +2,7 @@ package linguo.example.com.linguo;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -11,6 +12,7 @@ import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -221,7 +223,7 @@ public class ChatFragment extends Fragment {
 				if (status == TextToSpeech.ERROR)
 					Log.e(CHAT_FRAGMENT_TAG, "Error in TTS");
 				else
-					tts.setLanguage(new Locale("es", "ES")); //Has to be done once the status has been successful, so that's why it should be in this onInot function.
+					tts.setLanguage(new Locale("es", "ES")); //Has to be done once the status has been successful, so that's why it should be in this onInit function.
 			}
 		});
 
@@ -387,7 +389,6 @@ public class ChatFragment extends Fragment {
 			super(inflater.inflate(R.layout.user_message, parent, false));
 
 			//The super method gives a variable called itemView.
-
 			mUserTextView = itemView.findViewById(R.id.user_text);
 
 		}
@@ -521,7 +522,13 @@ public class ChatFragment extends Fragment {
 			super(inflater.inflate(R.layout.translation_message, parent, false));
 
 			mTranslateMessageTextView = itemView.findViewById(R.id.translation_text);
-			mTranslateMessageTextView.setMovementMethod(LinkMovementMethod.getInstance());
+			mTranslateMessageTextView.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://translate.yandex.com/"));
+					startActivity(browserIntent);
+				}
+			});
 		}
 
 		public void bind(Message message) {
@@ -685,7 +692,7 @@ public class ChatFragment extends Fragment {
 		} else if (reply.equals("``vc``")) {
 			respond("`vcstart`");
 			vocabularyRepeatedResponse();
-		} else if (input.contains("translate ") || input.contains("traduce ")) {
+		} else if (input.toLowerCase().contains("translate ") || input.toLowerCase().contains("traduce ")) {
 			String stringToTranslate = input.substring(input.indexOf("e") + 2); //From the first letter of what's to be translated to the end of the String.
 			new LoadTranslation().execute(stringToTranslate);
 		} else {
@@ -795,8 +802,10 @@ public class ChatFragment extends Fragment {
 				System.out.println(lang);
 
 				String translateLang;
-				if (lang.equals("es"))
+				if (lang.equals("es")) {
 					translateLang = "en";
+					tts.setLanguage(Locale.US);
+				}
 				else
 					translateLang = "es";
 
@@ -845,8 +854,9 @@ public class ChatFragment extends Fragment {
 		protected void onPostExecute(String s) {
 			super.onPostExecute(s);
 
-			mMessages.add(new Message(s, Message.TRANSLATION_MESSAGE, mMessagePosition)); //Speak the last message.
-			tts.speak(mMessages.get(mMessagePosition).getText(), TextToSpeech.QUEUE_FLUSH, null);
+			mMessages.add(new Message(s + "\n\n" + getResources().getString(R.string.yandex), Message.TRANSLATION_MESSAGE, mMessagePosition));
+			tts.speak(s, TextToSpeech.QUEUE_FLUSH, null); //Speak the last message.
+			tts.setLanguage(new Locale("es", "ES"));
 			updateUI(mMessagePosition++);
 		}
 	}

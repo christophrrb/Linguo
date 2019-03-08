@@ -13,7 +13,8 @@ public class HelpMessage {
 			"Necesito ayuda con el imperfecto.",
 			"Quiero ayuda con por y para.",
 			"Necesito ayuda con por y para.",
-			"Quiero ayuda con la audición."
+			"Quiero ayuda con la audición.",
+			"Traduce bicicleta."
 	};
 
 	public static String getRandomMessage() {
