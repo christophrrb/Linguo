@@ -11,8 +11,10 @@ import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -21,6 +23,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,15 +39,25 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
 import com.rivescript.RiveScript;
 
 import org.apache.commons.io.FileUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import static com.rivescript.Config.Builder.utf8;
 
@@ -186,6 +199,8 @@ public class ChatFragment extends Fragment {
 	 */
 	private SQLiteDatabase db;
 
+	private TextToSpeech tts;
+
 	/**
 	 * Used by ChatActivity to create a ChatFragment object
 	 * @return An instance of ChatFragment
@@ -198,6 +213,17 @@ public class ChatFragment extends Fragment {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+//		getActivity().setTheme(R.style.DarkTheme);
+
+		tts = new TextToSpeech(getActivity().getApplicationContext(), new TextToSpeech.OnInitListener() {
+			@Override
+			public void onInit(int status) {
+				if (status == TextToSpeech.ERROR)
+					Log.e(CHAT_FRAGMENT_TAG, "Error in TTS");
+				else
+					tts.setLanguage(new Locale("es", "ES")); //Has to be done once the status has been successful, so that's why it should be in this onInot function.
+			}
+		});
 
 		db = new DatabaseHelper(getContext()).getWritableDatabase();
 
@@ -332,14 +358,14 @@ public class ChatFragment extends Fragment {
 	 * messages.
 	 * @param insertPosition Position where the new message was inserted.
 	 */
-	public void updateUI(int insertPosition) {
+	public void updateUI(final int insertPosition) {
 		if (mAdapter == null) {
 			mAdapter = new MessageAdapter();
 			mRecyclerView.setAdapter(mAdapter);
 		} else {
 //			final Context context = mRecyclerView.getContext();
 //			mRecyclerView.getAdapter().notifyItemChanged(insertPosition);
-//			mAdapter.notifyItemInserted(insertPosition);
+			mAdapter.notifyItemInserted(insertPosition);
 		}
 
 		if (mAdapter.getItemCount() > 0) mRecyclerView.smoothScrollToPosition(mAdapter.getItemCount() - 1);
@@ -474,7 +500,7 @@ public class ChatFragment extends Fragment {
 
 		public void bind (Message message) {
 //			imageView.setImageDrawable(getResources().getDrawable(message.getResId()));
-			Glide.with(getContext()).load(message.getResId()).into(imageView);
+			Glide.with(getContext()).load(message.getResId()).apply(new RequestOptions().transforms(new RoundedCorners(50))).into(imageView);
 		}
 
 //		imageView.setImageBitmap(
@@ -483,6 +509,24 @@ public class ChatFragment extends Fragment {
 //									getResources(),
 //									message.getResId())));
 //		}
+	}
+
+	/**
+	 * TranslateMessageHolder
+	 */
+	public class TranslationMessageHolder extends RecyclerView.ViewHolder {
+		private TextView mTranslateMessageTextView;
+
+		public TranslationMessageHolder(LayoutInflater inflater, ViewGroup parent) {
+			super(inflater.inflate(R.layout.translation_message, parent, false));
+
+			mTranslateMessageTextView = itemView.findViewById(R.id.translation_text);
+			mTranslateMessageTextView.setMovementMethod(LinkMovementMethod.getInstance());
+		}
+
+		public void bind(Message message) {
+			mTranslateMessageTextView.setText(message.getText());
+		}
 	}
 
 	/**
@@ -509,6 +553,9 @@ public class ChatFragment extends Fragment {
 
 				case Message.IMAGE_MESSAGE:
 					return new ImageMessageHolder(layoutInflater, parent);
+
+				case Message.TRANSLATION_MESSAGE:
+					return new TranslationMessageHolder(layoutInflater, parent);
 
 				default:
 					return new BotMessageHolder(layoutInflater, parent);
@@ -539,6 +586,9 @@ public class ChatFragment extends Fragment {
 				case Message.IMAGE_MESSAGE:
 					((ImageMessageHolder) holder).bind(message);
 					break;
+
+				case Message.TRANSLATION_MESSAGE:
+					((TranslationMessageHolder) holder).bind(message);
 			}
 		}
 
@@ -561,8 +611,11 @@ public class ChatFragment extends Fragment {
 				case Message.IMAGE_MESSAGE:
 					return Message.IMAGE_MESSAGE;
 
+				case Message.TRANSLATION_MESSAGE:
+					return Message.TRANSLATION_MESSAGE;
+
 				default:
-					return 4;
+					return Message.BOT_MESSAGE;
 			}
 		}
 
@@ -588,6 +641,7 @@ public class ChatFragment extends Fragment {
 
 		if (reply.contains("Con lo cual, ¿de qué quieres hablar?") || reply.contains("¿De qué quieres conversar?")) {
 			mMessages.add(new Message(reply, Message.BOT_MESSAGE, mMessagePosition));
+			tts.speak(mMessages.get(mMessagePosition).getText(), TextToSpeech.QUEUE_FLUSH, null);
 			updateUI(mMessagePosition++); //TODO Add a delay for effect.
 			mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, mMessagePosition));
 			updateUI(mMessagePosition++);
@@ -631,8 +685,12 @@ public class ChatFragment extends Fragment {
 		} else if (reply.equals("``vc``")) {
 			respond("`vcstart`");
 			vocabularyRepeatedResponse();
+		} else if (input.contains("translate ") || input.contains("traduce ")) {
+			String stringToTranslate = input.substring(input.indexOf("e") + 2); //From the first letter of what's to be translated to the end of the String.
+			new LoadTranslation().execute(stringToTranslate);
 		} else {
 				mMessages.add(new Message(reply, Message.BOT_MESSAGE, mMessagePosition));
+				tts.speak(mMessages.get(mMessagePosition).getText(), TextToSpeech.QUEUE_FLUSH, null);
 
 //			//Handler to give a messaging effect.
 //			try {
@@ -648,8 +706,8 @@ public class ChatFragment extends Fragment {
 //
 //			}
 
-			updateUI(mMessagePosition++); //TODO Add a delay for effect.
-		}
+				updateUI(mMessagePosition++);
+			}
 
 		return reply;
 	}
@@ -660,14 +718,13 @@ public class ChatFragment extends Fragment {
 	 */
 	public void repeatedResponse(int iterations) {
 		for (int i = 1; i <= iterations; i++) {
-			mMessages.add(new Message(mBot.reply("user", "`" + i + "`"), Message.BOT_MESSAGE, mMessagePosition));
-			updateUI(mMessagePosition++);
+			mMessages.add(new Message(mBot.reply("user", "`" + i + "`"), Message.BOT_MESSAGE, mMessagePosition++));
 		}
 
-		mMessages.add(new Message(mBot.reply("user", "`ocstart`"), Message.BOT_MESSAGE, mMessagePosition));
-		updateUI(mMessagePosition++);
-		mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, mMessagePosition));
-		updateUI(mMessagePosition++);
+		mMessages.add(new Message(mBot.reply("user", "`ocstart`"), Message.BOT_MESSAGE, mMessagePosition++));
+		mMessages.add(new Message("Ej: " + HelpMessage.getRandomMessage(), HelpMessage.HELP_MESSAGE, mMessagePosition++));
+
+		updateUIRange(iterations + 2);
 	}
 
 	public void vocabularyRepeatedResponse() {
@@ -686,4 +743,111 @@ public class ChatFragment extends Fragment {
 		respond("`ocstart`");
 	}
 
+	private class LoadTranslation extends AsyncTask<String, Void, String> {
+
+		private Object obj = null;
+
+		private String append = "";
+		private BufferedReader in;
+		private StringBuffer response;
+		private String translationToReturn = "Perdón. Había un error.";
+
+		@Override
+		protected String doInBackground(String... strings) {
+			try {
+				append = strings[0];
+
+				URI uri = new URI(
+						"https",
+						"translate.yandex.net",
+						"/api/v1.5/tr.json/detect",
+						"key=trnsl.1.1.20190308T015611Z.bb6bbcdd8a9023a8.d084dbbdfd5e4f4df4fcc3fbc9e40e2f19616afe&hint=es,en&text=" + append,
+						null);
+
+				URL url = uri.toURL();
+				System.out.println(url.toString());
+
+				Log.d(ChatFragment.CHAT_FRAGMENT_TAG, "Creating the connection");
+				HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+				Log.d(ChatFragment.CHAT_FRAGMENT_TAG, "Response Code: " + con.getResponseCode());
+
+				in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+
+				String inputLine;
+				response = new StringBuffer();
+
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+
+				System.out.println("Response");
+				System.out.println(response);
+
+				in.close();
+
+				obj = new JSONParser().parse(response.toString());
+
+				JSONObject jo = (JSONObject) obj;
+
+				String lang = ((String) jo.get("lang"));
+
+				System.out.println(lang);
+
+				String translateLang;
+				if (lang.equals("es"))
+					translateLang = "en";
+				else
+					translateLang = "es";
+
+				//Getting the translation
+				URI translateURI = new URI(
+						"https",
+						"translate.yandex.net",
+						"/api/v1.5/tr.json/translate",
+						"key=trnsl.1.1.20190308T015611Z.bb6bbcdd8a9023a8.d084dbbdfd5e4f4df4fcc3fbc9e40e2f19616afe&lang=" + translateLang + "&text=" + append,
+						null
+				);
+
+				URL translateURL = translateURI.toURL();
+
+				System.out.println(translateURL.toString());
+
+				HttpURLConnection translateCon = (HttpURLConnection) translateURL.openConnection();
+
+				BufferedReader br = new BufferedReader(new InputStreamReader(translateCon.getInputStream()));
+
+				StringBuffer translateResponse = new StringBuffer();
+
+				String translateInputLine;
+
+				while ((translateInputLine = br.readLine()) != null) {
+					translateResponse.append(translateInputLine);
+				}
+
+				Object translationObj = new JSONParser().parse(translateResponse.toString());
+
+				JSONObject translationJSONObject = (JSONObject) translationObj;
+
+				System.out.println("Translation");
+
+				translationToReturn = translationJSONObject.get("text").toString();
+				System.out.println(translationToReturn);
+
+			} catch (Exception e) {
+				Log.e(ChatFragment.CHAT_FRAGMENT_TAG, e.toString());
+			}
+
+			return translationToReturn;
+		}
+
+		@Override
+		protected void onPostExecute(String s) {
+			super.onPostExecute(s);
+
+			mMessages.add(new Message(s, Message.TRANSLATION_MESSAGE, mMessagePosition)); //Speak the last message.
+			tts.speak(mMessages.get(mMessagePosition).getText(), TextToSpeech.QUEUE_FLUSH, null);
+			updateUI(mMessagePosition++);
+		}
+	}
 }

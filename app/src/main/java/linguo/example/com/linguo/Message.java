@@ -13,6 +13,7 @@ public class Message {
 	public static final int HELP_MESSAGE = 3; //Same as HelpMessage.HELP_MESSAGE
 	public static final int SOUND_MESSAGE = 4;
 	public static final int IMAGE_MESSAGE = 5;
+	public static final int TRANSLATION_MESSAGE = 6;
 
 
 	private int mType;

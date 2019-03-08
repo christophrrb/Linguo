@@ -13,31 +13,31 @@
 ! sub diez = 10
 
 + `start`
-- ¡Hola! Soy Linguo. Me gustaría ayudarte a aprender español! ¿Cómo te llamas?{topic=name}
+- ¡Hola! Soy Linguo. Me gustaría ayudarte a aprender español! ¿Cómo te llamas? (What's your name?){topic=name}
 
 > topic name
     + *
-    - <set name=<formal>>Un placer conocerte <get name>. Dime, ¿por qué aprendes español?{topic=pleasure}
+    - <set name=<formal>>Un placer conocerte <get name>. Dime, ¿por qué aprendes español? (Why are you learning Spanish?){topic=pleasure}
 < topic
 
 > topic pleasure
     + *
-    - Qué bueno. ¿Por cuánto tiempo has estado aprendiendo español?{topic=timeLearning}
+    - Qué bueno. ¿Por cuánto tiempo has estado aprendiendo español? (How long have you been learning Spanish?){topic=timeLearning}
 < topic
 
 > topic timeLearning
     + [*]# (día|días) [*]
-    * <star1> > 10 => ¡Bien! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar?{topic=random}
-    * <star1> >= 1 => ¡Qué corto! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar?{topic=random}
+    * <star1> > 10 => ¡Bien! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar? (What do you want to talk about?){topic=random}
+    * <star1> >= 1 => ¡Qué corto! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar? (What do you want to talk about?){topic=random}
 
     + [*]# (mes|meses) [*]
-    * <star1> > 10 => ¡Casi un año! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar?{topic=random}
-    * <star1> >= 1 => ¡Bien! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar?{topic=random}
+    * <star1> > 10 => ¡Casi un año! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar? (What do you want to talk about?){topic=random}
+    * <star1> >= 1 => ¡Bien! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar? (What do you want to talk about?){topic=random}
 
     + [*]# (año|años) [*]
-    * <star1> > 3 => ¡Tienes experiencia! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar?{topic=random}
-    * <star1> >= 1 => ¡Bien! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar?{topic=random}
+    * <star1> > 3 => ¡Tienes experiencia! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar? (What do you want to talk about?){topic=random}
+    * <star1> >= 1 => ¡Bien! Como tu asistente, quiero ayudarte y contestar tus preguntas :).\nCon lo cual, ¿de qué quieres hablar? (What do you want to talk about?){topic=random}
 
     + *
-    - Por favor, dime un número.
+    - Por favor, dime un número. (Please enter a number.)
 > topic

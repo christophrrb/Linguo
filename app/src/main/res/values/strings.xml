@@ -3,4 +3,5 @@
     <string name="send_button_text">Enviar</string>
     <string name="chat_edittext_hint">Escribir Mensaje</string>
 	<string name="send_button">Send Button</string>
+	<string name="yandex"><a href="http://translate.yandex.com/">Powered by Yandex.Translate</a></string>
 </resources>

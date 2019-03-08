@@ -5,4 +5,5 @@
     <color name="colorAccent">#4db6ac</color>
     <color name="botMessageBubbleColor">#e0e0e0</color>
     <color name="myDarkGray">#616161</color>
+    <color name="primary_text_default_material_dark">#000000</color>
 </resources>

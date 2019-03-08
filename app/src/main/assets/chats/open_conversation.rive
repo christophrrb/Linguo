@@ -15,7 +15,7 @@
 ! sub diez = 10
 
 + `ocstart`
-- ¿De qué quieres conversar?
+- ¿De qué quieres conversar? (What do you want to talk about?)
 
 //I thought about using the @ operator to not have those commands in multiple places, but it might be fine how it is for
 //now.
